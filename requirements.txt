@@ -2,6 +2,7 @@ gensim
 streamlit
 nltk
 pdfminer.six
-asyncio
 apscheduler
+docx2pdf
+pypiwin32
 git+https://github.com/jaraco/path.git

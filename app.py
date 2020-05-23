@@ -18,6 +18,9 @@ from mods.apps_finder import foo
 import winreg
 from mods.scheduler import schedule
 from mods.cleaner import *
+from mods.excel import convertpdf
+from docx2pdf import convert
+from mods.auth import auth
 
 html_temp="""
     <div style="color:crimson;padding:15px;">
@@ -61,6 +64,8 @@ def main():
         'Topics identifier in text'.upper(),
         'Schedule application'.upper(),
         'Clean temporary files'.upper(),
+        'Excel to PDF'.upper(),
+        'Word to PDF'.upper(),
 
     ]
     choice=st.sidebar.selectbox("Select Activity",activities)
@@ -448,9 +453,72 @@ def main():
                         st.success("done")
         else:
             st.error("path invalid")
+
+
+    if choice == 'Excel to PDF'.upper():
+        st.header('Convert Excel file to pdf file'.upper())
+        excelpath = st.text_input('enter path of excel file')
+        pdfpath = st.text_input('enter path for new pdf file')
+        if excelpath and pdfpath and st.button('convert'):
+            with st.spinner('converting'):
+                convertpdf(excelpath,pdfpath)
+                st.success('done')
+        else:
+            st.error('invalid details')
+
+    if choice == 'Word to PDF'.upper():
+        st.header('Convert Word file to pdf file'.upper())
+        wordpath = st.text_input('enter path of excel file')
+        pdfpath = st.text_input('enter path for new pdf file')
+        if wordpath and pdfpath and st.button('convert'):
+            with st.spinner('converting'):
+                convert(wordpath,pdfpath)
+                st.success('done')
+
+
+
+
+def is_authenticated(password):
+    return password == "admin"
+
+
+def generate_login_block():
+    block1 = st.empty()
+    block2 = st.empty()
+
+    return block1, block2
+
+
+def clean_blocks(blocks):
+    for block in blocks:
+        block.empty()
+
+
+def login(blocks):
+    blocks[0].markdown("""
+            <style>
+                input {
+                    -webkit-text-security: disc;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+
+    return blocks[1].text_input('Password')
+
+
+
+
+
+
+
 if __name__ == "__main__":
-    main()
+    login_blocks = generate_login_block()
+    password = login(login_blocks)
+
+    if is_authenticated(password):
+        clean_blocks(login_blocks)
+        st.balloons()
+        main()
+    elif password:
+        st.info("Please enter a valid password")
         
-
-
-
