@@ -1,0 +1,6 @@
+gensim
+streamlit
+nltk
+pdfminer.six
+asyncio
+apscheduler

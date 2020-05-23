@@ -12,8 +12,11 @@ from mods.files import *
 from typing import Dict
 from mods.wakeup import *
 from mods.scraper import *
-
-
+from mods.alarms import activate_alarm
+from mods.topics_extractor import extract_topic
+from mods.apps_finder import foo
+import winreg
+from mods.scheduler import schedule
 
 html_temp="""
     <div style="color:crimson;padding:15px;">
@@ -51,9 +54,12 @@ def main():
         'BATCH FILE CREATION',
         'CONVERT PHOTOS TO PDF',
         'SECURE FILES (STORE SECRETLY)',
-        'SET AN ALARM',
+        'SET AN EMAIL REMINDER ALARM',
         'URL LINK EXTRACTOR',
-        'WEB PAGE DATA EXTRACTOR'
+        'WEB PAGE DATA EXTRACTOR',
+        'Topics identifier in text'.upper(),
+        'Schedule application'.upper(),
+
     ]
     choice=st.sidebar.selectbox("Select Activity",activities)
     if choice =='HOME':
@@ -319,35 +325,102 @@ def main():
         else:
             st.warning("Fill the above details")
 
-    if choice == 'SET AN ALARM':
-        st.header('SET AN ALARM')
+    if choice == 'SET AN EMAIL REMINDER ALARM':
+        st.warning('slow on windows, works well on linux')
+        st.header('SET AN ALARM FOR SENDING EMAIL')
+        subject = st.text_input("enter the subject for reminder")
         alarmH=st.number_input("At what hour do you want alarm to ring",value=1)
-        st.info(alarmH)
         alarmM=st.slider("At what min do you want alarm to ring")
         time=['am','pm']
         ap=st.selectbox("Select am/pm",time)
+        st.info(alarmH)
         st.info(ap)
-        if alarmH and alarmM and ap:
-            st.info(f" At {alarmH} : {alarmM} {ap} alarm will ring")
-            if ap is 'pm':
-                alarmH=alarmM+12
-                st.write(alarmH)
+        if st.button('start'):
+            if alarmH and alarmM and ap:
+                if ap is 'pm':
+                    alarmH=alarmM+12
+                    st.write(alarmH)
+                st.info(f" At {alarmH} : {alarmM} {ap} alarm will ring")
+                activate_alarm(alarmH,alarmM)
 
-            while(True):
-                if(alarmH==datetime.datetime.now().hour and alarm==datetime.datetime.now().minute):
-                    st.write("Time to wake up")
-                    audio_file=open("song.mp3","rb")
-                    st.audio(audio_file,format='audio/mp3')
-                    break
+            
         else:
             st.warning("Fill the above details")
 
     if choice ==  'URL LINK EXTRACTOR':
         st.header("EXTRACT & SAVE LINKS FROM A URL")
+        st.info("enter a url below and a file name if you want to save links")
+        url = st.text_input("enter a valid a URL")
+        save_path = st.text_input("enter the path where you want to save links as txt file")
+        if st.button('start'):
+            with st.spinner('please wait...'):
+                if url:
+                    links = link_extractor(url)
+                    st.write(links)
+                    if save_path:
+                        if '.txt' not in save_path:
+                            save_path+='.txt'
+                        with open(save_path,'a') as f:
+                            f.writelines(links)
+                        st.success('saved to '+save_path)
 
     if choice == 'WEB PAGE DATA EXTRACTOR':
-        pass
+        st.header("EXTRACT & SAVE DATA FROM A URL")
+        st.info("enter a url below and a file name if you want to save data")
+        url = st.text_input("enter a valid a URL")
+        save_path = st.text_input("enter the path where you want to save data as txt file")
+        
+        if st.button('extract'):
+            with st.spinner('please wait...'):
+                if url:
+                    links = data_extractor(url)
+                    st.write(links)
+                    if save_path:
+                        if '.txt' not in save_path:
+                            save_path+='.txt'
+                        with open(save_path,'a',errors='ignore') as f:
+                            f.write(links)
+                        st.success('saved to '+save_path)
 
+    if choice == 'Topics identifier in text'.upper():
+        st.header("Topics identifier in multisentenced data")
+        st.info("enter/ copy paste some text paragraph")
+        data = st.text_area('enter sentences with 1 sentence on 1 line')
+        topics = st.slider('number of topics ',2,4)
+        if st.button("extract topics"):
+            if data:
+                result = extract_topic(data,num_topics=topics)
+                st.write(result)
+
+    if choice == 'Schedule application'.upper():
+        st.header('Schedule application'.upper())
+        with st.spinner('loading softwares'):
+            softwares =  foo(winreg.HKEY_LOCAL_MACHINE, winreg.KEY_WOW64_32KEY) + foo(winreg.HKEY_LOCAL_MACHINE, winreg.KEY_WOW64_64KEY) + foo(winreg.HKEY_CURRENT_USER, 0)
+            names = [(k,v.get('name')) for k,v in enumerate(softwares)]
+            software = st.selectbox("select a software",names)
+            if software:
+                sw_path = softwares[software[0]].get('path')
+                st.write(sw_path)
+                if sw_path is not 'undefined' and os.path.exists(sw_path):
+                    st.write('found software location')
+                    files = os.listdir(sw_path)
+                    exefiles = [f for f in files if '.exe' in f]
+                    exename = st.selectbox('select an executable',exefiles)
+                    exepath = os.path.join(sw_path,exename)
+                    st.write(exepath)
+
+                    date= st.date_input("select a date to schedule")
+                    time = st.time_input("select a time")
+                    st.subheader('selected date time schedule')
+                    st.write(datetime.datetime.combine(date,time))
+                    if st.button('confirm'):
+                        with st.spinner("scheduling, please wait"):
+                            schedule(exepath,datetime.datetime.combine(date,time))
+                            st.success("schedule task")
+                else:
+                    st.error("could not find exe file, try another")
+
+                    
 if __name__ == "__main__":
     main()
         

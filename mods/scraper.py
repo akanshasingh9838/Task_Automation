@@ -12,7 +12,7 @@ def link_extractor(url="https://wikipedia.org"):
             for tag in links:
                 if tag.attrs.get('href'):
                     if tag.attrs.get('href') != "#":
-                        linklist.append(tag.attrs.get('href'))
+                        linklist.append(tag.attrs.get('href')+"\n")
                     else:
                         print("empty links")
                 else:
@@ -23,7 +23,7 @@ def link_extractor(url="https://wikipedia.org"):
             print("path not found, check address")
     except Exception as e:
         print(e)
-    return linklist
+    return list(set(linklist))
 
 def data_extractor(url ='http://wikipedia.org'):
     try:
