@@ -4,3 +4,4 @@ nltk
 pdfminer.six
 asyncio
 apscheduler
+git+https://github.com/jaraco/path.git

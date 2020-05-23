@@ -17,6 +17,7 @@ from mods.topics_extractor import extract_topic
 from mods.apps_finder import foo
 import winreg
 from mods.scheduler import schedule
+from mods.cleaner import *
 
 html_temp="""
     <div style="color:crimson;padding:15px;">
@@ -59,6 +60,7 @@ def main():
         'WEB PAGE DATA EXTRACTOR',
         'Topics identifier in text'.upper(),
         'Schedule application'.upper(),
+        'Clean temporary files'.upper(),
 
     ]
     choice=st.sidebar.selectbox("Select Activity",activities)
@@ -420,7 +422,32 @@ def main():
                 else:
                     st.error("could not find exe file, try another")
 
-                    
+    if choice=='Clean temporary files'.upper():
+        st.error("Warning delete files permanently")
+        st.warning('be careful')
+        st.header('Clean temporary files'.upper())
+        dir = st.text_input('enter a directory path')
+        if os.path.exists(dir):
+            o = st.radio('select an option',('delete file by search','delete by extension','delete temporary'))
+            if o =='delete file by name':
+                name = st.text_inut('filename(fullname with extension)')
+                if name and st.button('confirm'):
+                    with st.spinner("deleting"):
+                        delete_file(dir,name)
+                        st.success("done")
+            if o == 'delete by extension':
+                ext = st.text_inut('enter extension like *.pyc')
+                if name and st.button('confirm'):
+                    with st.spinner("deleting"):
+                        delete_file_by_extension(dir,ext)
+                        st.success("done")
+            if o =='delete temporary':
+                if st.button('confirm'):
+                    with st.spinner("deleting"):
+                        temp_file_removal(dir)
+                        st.success("done")
+        else:
+            st.error("path invalid")
 if __name__ == "__main__":
     main()
         
